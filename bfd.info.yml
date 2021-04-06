@@ -1,0 +1,10 @@
+name: 'bfd'
+type: module
+description: 'Main bfd module providing basic site-wide features.'
+core: 8.x
+package: 'vzbv'
+dependencies:
+  - drupal:block
+  - drupal:node
+  - paragraphs:paragraphs
+  - search_api:search_api

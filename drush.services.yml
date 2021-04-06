@@ -1,0 +1,7 @@
+services:
+  bfd.pdf.commands:
+    class: \Drupal\bfd\Commands\PdfCommands
+    arguments: ['@bfd.utilities', '@bfd.pdf']
+    tags:
+      - { name: drush.command }
+

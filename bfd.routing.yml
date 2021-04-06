@@ -1,0 +1,7 @@
+bfd.download:
+    path: /download/{fn}
+    defaults:
+        _controller: Drupal\bfd\Controller\DownloadController::dispatch
+        fn: null
+    requirements:
+        _permission: 'access content'

@@ -1,0 +1,142 @@
+parameters:
+    bfd.cache: true
+    bfd.cache.toc: true
+    bfd.cache.menu: true
+    bfd.cache.subsidies: true
+    bfd.cache.nodes: true
+services:
+    bfd.utilities:
+        class: Drupal\bfd\Utilities
+        arguments:
+            - '@service_container'
+    bfd.toc:
+        class: Drupal\bfd\Menu\Toc
+        arguments:
+            - '@bfd.utilities'
+            - '@database'
+            - '@bfd.field_service'
+            - '%bfd.cache.toc%'
+    bfd.menu:
+        class: Drupal\bfd\Menu\Menu
+        arguments:
+            - '@bfd.utilities'
+            - '@bfd.toc'
+            - '@bfd.path_helper'
+            - '@bfd.subsidy'
+            - '%bfd.cache.menu%'
+    bfd.path_helper:
+        class: Drupal\bfd\PathHelper
+        arguments:
+            - '@bfd.utilities'
+            - '@bfd.toc'
+    bfd.alias_generator:
+        class: Drupal\bfd\Alias\AliasGenerator
+        arguments:
+            - '@bfd.utilities'
+            - '@bfd.path_helper'
+    bfd.alias_storage:
+        class: Drupal\bfd\Alias\AliasStorage
+        decorates: 'path.alias_storage'
+        arguments: 
+            - '@bfd.alias_storage.inner'
+            - '@database'
+            - '@module_handler'
+    bfd.hyphenator:
+        class: Drupal\bfd\Hyphenator\Hyphenator
+        arguments: 
+            - '@bfd.utilities'
+            - '@app.root'
+    bfd.route_subscriber:
+        class: Drupal\bfd\Routing\RouteSubscriber
+        tags:
+          - { name: event_subscriber }
+    bfd.request_listener:
+        class: Drupal\bfd\Request\RequestSubscriber
+        arguments: 
+            - '@bfd.path_helper'
+            - '@bfd.toc'
+        tags:
+            - { name: event_subscriber }
+    bfd.twig_extension:
+        class: Drupal\bfd\Twig\TwigExtension
+        arguments: 
+            - '@bfd.hyphenator'
+            - '@bfd.utilities'
+            - '@bfd.node_service'
+            - '@bfd.field_service'
+            - '@bfd.media_service'
+            - '@bfd.related'
+        tags:
+          - { name: twig.extension }
+    bfd.subsidy:
+        class: Drupal\bfd\Subsidies\Subsidy
+        arguments: 
+            - '@bfd.utilities'
+            - '@bfd.toc'
+            - '@entity_type.manager'
+            - '@database'
+            - '%bfd.cache.subsidies%'
+            - '@bfd.hyphenator'
+    bfd.node_service:
+        class: Drupal\bfd\Content\Node
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+            - '@bfd.field_service'
+            - '@metatag.manager'
+            - '%bfd.cache.nodes%'
+    bfd.field_service:
+        class: Drupal\bfd\Content\Field
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+    bfd.terms_service:
+        class: Drupal\bfd\Content\Terms
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+            - '%bfd.cache%'
+    bfd.media_service:
+        class: Drupal\bfd\Content\Media
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+            - '@bfd.field_service'
+            - '@file_system'
+    bfd.pdf:
+        class: Drupal\bfd\Content\PDF
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@request_stack'
+            - '@renderer'
+            - '@bfd.media_service'
+    bfd.checklists:
+        class: Drupal\bfd\Content\Checklists
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+            - '@bfd.subsidy'
+            - '%bfd.cache%'
+    bfd.related:
+        class: Drupal\bfd\Content\Related
+        arguments: 
+            - '@bfd.utilities'
+            - '@database'
+            - '@bfd.subsidy'
+            - '@bfd.node_service'
+            - '@bfd.checklists'
+            - '%bfd.cache%'
+    bfd.news:
+        class: Drupal\bfd\Content\News
+        arguments: 
+            - '@bfd.utilities'
+            - '@entity_type.manager'
+            - '@database'
+            - '@bfd.hyphenator'
+            - '%bfd.cache%'

@@ -1,0 +1,334 @@
+<?php
+
+use Drupal\node\Entity\Node;
+use Drupal\bfd\Content\Media;
+use Drupal\Core\Url;
+
+use Symfony\Component\Process\Process;
+use Symfony\Component\Process\Exception\ProcessFailedException;
+
+/**
+ *  Generate node aliases on node inserts & updates.
+ */
+function bfd_node_update(Node $node) {}
+
+function bfd_node_insert(Node $node) {
+
+  // Generate alias
+
+  $generator = Drupal::service('bfd.alias_generator');
+  $storage   = Drupal::service('bfd.alias_storage');
+  $utils     = Drupal::service('bfd.utilities');
+
+  $source    = '/node/'.$node->id();
+  $alias     = $generator->buildPathAlias($node);
+  $langcode  = $utils->getLanguage();
+
+  $storage->save($source, $alias, $langcode, null);
+}
+
+/**
+ * Act upon a node before it is updated (or created).
+ */
+function bfd_node_presave(Node $node) {
+
+  if ($node->bundle() != 'subsidy') {
+
+    return;
+  }
+
+  /**
+   * In order to successfully generate a PDF, we have to trigger the generation 
+   * process from outside a standard page request.
+   *
+   * So until we come up with a better solution (i.e., do the rendering as part of 
+   * a standard page request), we'll do it from the command line.
+   * 
+   * @see Drupal\bfd\Content\PDF::renderNode()
+   */
+  $nid = $node->id();
+
+  $process = new Process("drush bfd:generate-subsidy-pdf {$nid}");
+  $process->run();
+
+  if (!$process->isSuccessful()) {
+
+    \Drupal::logger('bfd.pdf')->warning('PDF file and db entries creation for node '.$node->id().' seems to have failed.');
+  }
+}
+
+/**
+ * Register template files for custom blocks
+ */
+function bfd_theme($existing, $type, $theme, $path) {
+
+  // Cf. https://webdev.iac.gatech.edu/blog/drupal8_render_twig
+  return [
+
+    'bfd-main-menu' => [
+
+      'variables' => ['data' => null],
+    ],
+
+    'bfd-subsidy-footer-menu' => [
+
+      'variables' => ['data' => null],
+    ],
+
+    'bfd-meta-menu' => [
+
+      'variables' => ['data' => null],
+    ],
+
+    'bfd-search-form' => [
+
+      'variables' => ['data' => null],
+    ],
+
+    'bfd-hub-page-tocs' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-subsidies' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-subsidy-search' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-subsidy-search-teaser' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-subsidy-infopackage' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-breadcrumbs' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-related' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-news' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-downloads' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-component--cta' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-component' => [
+
+      'variables' => ['data' => null],  
+    ],
+
+    'bfd-calculator' => [
+
+      'variables' => ['data' => null],  
+    ],
+  ];
+}
+
+/**
+ * Workaround for a memory_limit issue occuring on very short search strings (like one or two letters).
+ *  
+ * @param  \Drupal\search_api\Query\QueryInterface
+ * @return void
+ */
+function bfd_search_api_query_alter(\Drupal\search_api\Query\QueryInterface $query) {
+  
+  // Get tokenizer processor    
+
+  $tokenizer = $query->getIndex()->getProcessor('tokenizer');
+
+  if (!$tokenizer) {
+
+    return;
+  }
+
+  // Get its config
+
+  $config = $tokenizer->defaultConfiguration();
+
+  if (!isset($config['minimum_word_size'])) {
+
+    $config['minimum_word_size'] = 3;
+  }
+
+  // Abort search when search string is < 3 characters long
+
+  $search = $query->getOriginalKeys();
+
+  if (is_array($search)) {
+
+    $search = implode(' ', $search);
+  }
+
+  if (mb_strlen($search) < $config['minimum_word_size']) {
+    
+    $query->abort();    
+  }
+}
+
+/**
+ * Sitemap generation.
+ *
+ * Test with drush ssg --uri=https://www.baufoerderer-v3.test
+ * 
+ * @param  Array
+ * @param  String
+ * @return void
+ */
+function bfd_simple_sitemap_links_alter(array &$links, $sitemap_variant) {
+
+  $utils = Drupal::service('bfd.utilities');
+  $lang  = $utils->getLanguage();
+
+  foreach ($links as &$link) {
+    
+    // Remove unnecessary infos
+    
+    foreach (['changefreq', 'alternate_urls'] as $unset) {
+
+      unset($link[$unset]);
+    }
+
+    // Get language right
+
+    $link['langcode'] = $lang;
+  }
+}
+
+/**
+ * Add arbitrary links to the sitemap.
+ *
+ * @param Array 
+ * @param String 
+ */
+function bfd_simple_sitemap_arbitrary_links_alter(array &$arbitrary_links, $sitemap_variant) {
+
+  $media = Drupal::service('bfd.media_service');
+  $fs    = Drupal::service('file_system');
+
+  $data  = $media->getFilesByTags([Media::CHECKLISTS, Media::GUIDES, Media::WIE, Media::SUBSIDIES]);
+  
+  if (empty($data) || !isset($data['items'])) {
+
+    return;
+  }
+
+  $tags  = $data['by_tags']; 
+  $items = $data['items']; 
+
+  foreach($items as $item) {
+
+    $source = $item['source'];
+    $media  = $item['item'];
+
+    // Default url
+
+    $url = $source->url();
+
+    // Url based on file tags
+
+    if (in_array($media->id(), $tags[Media::GUIDES]) || in_array($media->id(), $tags[Media::SUBSIDIES])) {
+
+      $fn  = basename($source->getFileUri()); // Turns out just using File::getFilename() is a bit unreliable and
+                                              // might yield unexpected results (like the MEDIA item's name). 
+
+      $url = Url::fromRoute('bfd.download', ['fn' => $fn])->setAbsolute()->toString();
+    }
+
+    // Set last modified
+
+    $lastmod = date('c', $source->getChangedTime()); // ISO 8601
+
+    // Add an arbitrary link to all sitemap variants.
+    
+    $arbitrary_links[] = [
+      
+      'url'      => $url,
+      'priority' => '0.5',
+
+      // An ISO8601 formatted date.
+      'lastmod' => $lastmod,
+    ];
+  }
+}
+
+/**
+ * Set a meta description if it's not already set.
+ * 
+ * @param  Array
+ * @param  Array
+ */
+function bfd_metatags_alter(array &$metatags, array &$context) {
+
+  $entity = $context['entity'] ?? null;
+
+  // Return early if we don't have a node...
+
+  if (!$entity || !$entity instanceof Node) {
+
+    return;
+  }
+
+  // ...or are facing a certain bundle...
+
+  $bundle = $entity->bundle();
+
+  if (in_array($bundle, array('article', 'subsidy', 'subsidy_hub'))) {
+
+    return;
+  }
+
+  // ...or if we already have a non-default description (i.e., one without tags like [node:summary])...
+
+  $is_default_desc = preg_match('/^\[[_:a-z]+\]$/i', $metatags['description']);
+
+  if (!$is_default_desc && !empty($metatags['description'])) {
+
+    return;
+  }
+
+  // ...or if we don't have a body field to operate with.
+
+  $body = $entity->hasField('body') ? $entity->get('body') : null;
+
+  if (!$body || $body->isEmpty()) {
+
+    return;
+  }
+
+  // Get body & remove tags and whitespace
+
+  $body = trim(preg_replace('/\s+/S', ' ', html_entity_decode(strip_tags($body->first()->value))));
+
+  // Truncate it
+
+  preg_match("/\W*(?:\w+\b\W*){5,25}/", $body, $desc);
+
+  if (!empty($desc)) {
+
+    $metatags['description'] = rtrim(trim(end($desc)), '.!?:,;').'...';
+  }
+
+}

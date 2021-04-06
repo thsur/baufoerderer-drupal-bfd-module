@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <style>
+
+      {{ css }}
+
+      @font-face {
+        
+        font-family: 'Merriweather Sans';
+        font-style: normal;
+        font-weight: 300;
+        src: url({{ font }}) format("truetype");
+      }
+
+      html,    
+      body {
+
+        height: 100%;
+      }
+
+      body {
+
+        padding: 0;
+        margin: 0;
+
+        padding-top: 30px;
+      }
+      
+      .page-info {
+
+        margin: 0 auto;
+
+        font-family: 'Merriweather Sans';
+        text-align: center;
+
+        width: 32px;
+        height: 32px;
+
+        font-size: 14px;
+        border-radius: 50%;
+
+        color: rgb(255,255,255);
+        background-color: rgb(77, 77, 75);
+      }
+
+      .page {
+
+        display: inline-block;
+        vertical-align: center;
+        
+        line-height: 32px;
+        
+      }
+
+      </style>
+      <script>
+      function subst() {
+    
+          var vars = {};
+          var qs   = document.location.search.substring(1).split('&');
+    
+          for (var query_string in qs) {
+              
+              if (qs.hasOwnProperty(query_string)) {
+              
+                  var tmp      = qs[query_string].split('=', 2);
+                  vars[tmp[0]] = decodeURI(tmp[1]);
+              }
+          }
+    
+          var selectors = ['page', 'frompage', 'topage', 'webpage', 'section', 'subsection', 'date', 'isodate', 'time', 'title', 'doctitle', 'sitepage', 'sitepages'];
+    
+          for (var selector in selectors) {
+
+              if (selectors.hasOwnProperty(selector)) {
+
+                  var element = document.getElementsByClassName(selectors[selector]);
+                
+                  for (var j = 0; j < element.length; ++j) {
+
+                      element[j].textContent = vars[selectors[selector]];
+                  }
+              }
+          }
+      }
+    </script>
+  </head>
+  <body onload="subst()">
+    <div class="page-info">
+      <span class="page"></span> 
+    </div>
+  </body>
+</html>

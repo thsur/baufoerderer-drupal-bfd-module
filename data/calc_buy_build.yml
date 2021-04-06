@@ -1,0 +1,101 @@
+Bundesländer:    
+    Baden-Württemberg:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 3.57
+    Bayern:
+        Grunderwerbsteuer: 
+            Value: 3.50
+        Maklergebühren: 
+            Value: 3.57
+    Berlin:
+        Grunderwerbsteuer: 
+            Value: 6.00
+        Maklergebühren: 
+            Value: 7.14
+    Brandenburg:
+        Grunderwerbsteuer: 
+            Value: 6.50
+        Maklergebühren: 
+            Value: 7.14
+    Bremen:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 5.95
+    Hamburg:
+        Grunderwerbsteuer: 
+            Value: 4.50
+        Maklergebühren: 
+            Value: 6.25
+    Hessen:
+        Grunderwerbsteuer: 
+            Value: 6.00
+        Maklergebühren: 
+            Value: 5.95
+    Mecklenburg-Vorpommern:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 3.57
+    Niedersachsen:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 4.76
+    Nordrhein-Westfalen:
+        Grunderwerbsteuer: 
+            Value: 6.50
+        Maklergebühren: 
+            Value: 3.57
+    Rheinland-Pfalz:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 3.57
+    Saarland:
+        Grunderwerbsteuer: 
+            Value: 6.50
+        Maklergebühren: 
+            Value: 3.57
+    Sachsen:
+        Grunderwerbsteuer: 
+            Value: 3.50
+        Maklergebühren: 
+            Value: 3.57
+    Sachsen-Anhalt:
+        Grunderwerbsteuer: 
+            Value: 5.00
+        Maklergebühren: 
+            Value: 3.57
+    Schleswig-Holstein:
+        Grunderwerbsteuer: 
+            Value: 6.50
+        Maklergebühren: 
+            Value: 3.57
+    Thüringen:
+        Grunderwerbsteuer: 
+            Value: 6.50
+        Maklergebühren: 
+            Value: 3.57
+Bauen:
+    Notarkosten: 
+        Desc: Notarkosten Eigentumsübertragung (ca. 1%) 
+        Value: 1.0
+    Grundbuchgebühren:
+        Desc: Grundbuchgebühren Eigentumsübertragung (ca. 0,5%)
+        Value: 0.5
+    Grundschuldbestellung:
+        Desc: Sicherheits-/Grundschuldbestellung (ca. 0,5% der Darlehenssumme)
+        Value: 0.5
+Kaufen:
+    Notarkosten: 
+        Desc: Notarkosten Eigentumsübertragung (ca. 1%) 
+        Value: 1.0
+    Grundbuchgebühren:
+        Desc: Grundbuchgebühren Eigentumsübertragung (ca. 0,5%)
+        Value: 0.5
+    Grundschuldbestellung:
+        Desc: Sicherheits-/Grundschuldbestellung (ca. 0,5% der Darlehenssumme)
+        Value: 0.5
